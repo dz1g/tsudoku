@@ -22,6 +22,7 @@ const AVATAR_COLORS = [
 export class RoomManager {
   private rooms: Map<string, Room> = new Map();
   private socketToRoom: Map<string, { roomId: string; playerId: string }> = new Map();
+  private playerSolvedCells: Map<string, Set<string>> = new Map();
 
   private generateCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -172,6 +173,13 @@ export class RoomManager {
     const room = this.rooms.get(roomId);
     if (!room || room.status !== 'COUNTDOWN') return null;
 
+    // Clear any previous solved cells for this room
+    for (const key of Array.from(this.playerSolvedCells.keys())) {
+      if (key.startsWith(`${roomId}:`)) {
+        this.playerSolvedCells.delete(key);
+      }
+    }
+
     // Generate puzzle
     const puzzle = SudokuEngine.generate(room.settings.difficulty, room.seed);
     room.puzzle = puzzle;
@@ -211,6 +219,7 @@ export class RoomManager {
     player: Player;
     isValid?: boolean;
     deltaScore?: number;
+    isLocked?: boolean;
     isGameComplete?: boolean;
   } | null {
     const room = this.rooms.get(roomId);
@@ -222,10 +231,30 @@ export class RoomManager {
     const isInstant = room.settings.validationMode === 'instant';
 
     if (isInstant) {
+      const cellKey = `${row},${col}`;
+      const playerKey = `${roomId}:${playerId}`;
+      let solved = this.playerSolvedCells.get(playerKey);
+      if (!solved) {
+        solved = new Set();
+        this.playerSolvedCells.set(playerKey, solved);
+      }
+
+      // ANTI-ABUSE: If this cell was already solved by this player, do not award points again
+      if (solved.has(cellKey)) {
+        return {
+          room,
+          player,
+          isValid: true,
+          deltaScore: 0,
+          isLocked: true,
+        };
+      }
+
       const isCorrect = SudokuEngine.isCellCorrect(room.puzzle.solution, row, col, val);
       const scoreCalc = ScoringEngine.calculateMoveScore(isCorrect, timeSpentMs, room.settings.difficulty);
 
       if (isCorrect) {
+        solved.add(cellKey);
         player.score += scoreCalc.deltaScore;
       } else {
         player.mistakes += 1;
@@ -237,6 +266,7 @@ export class RoomManager {
         player,
         isValid: isCorrect,
         deltaScore: scoreCalc.deltaScore,
+        isLocked: isCorrect,
       };
     }
 
@@ -335,6 +365,13 @@ export class RoomManager {
   public rematch(roomId: string): Room | null {
     const room = this.rooms.get(roomId);
     if (!room) return null;
+
+    // Clear solved cells on rematch
+    for (const key of Array.from(this.playerSolvedCells.keys())) {
+      if (key.startsWith(`${roomId}:`)) {
+        this.playerSolvedCells.delete(key);
+      }
+    }
 
     room.status = 'LOBBY';
     room.seed = Math.floor(Math.random() * 1000000);

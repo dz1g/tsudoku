@@ -4,7 +4,8 @@ interface CellProps {
   row: number;
   col: number;
   value: number;
-  given: boolean;
+  given: boolean; // Pre-generated clue
+  isLocked?: boolean; // User-filled correct placement in instant mode
   notes: number[];
   isSelected: boolean;
   isRelated: boolean;
@@ -19,6 +20,7 @@ export const Cell: React.FC<CellProps> = ({
   col,
   value,
   given,
+  isLocked,
   notes,
   isSelected,
   isRelated,
@@ -32,32 +34,46 @@ export const Cell: React.FC<CellProps> = ({
   const isBottomThick = row === 2 || row === 5;
 
   // Background styling logic
-  let bgClass = 'bg-slate-900 hover:bg-slate-800/80';
+  let bgClass = given ? 'bg-slate-900/95' : 'bg-slate-950/70 hover:bg-slate-900/60';
   if (isSelected) {
     bgClass = 'bg-indigo-600/40 ring-2 ring-indigo-400 z-10';
   } else if (isError) {
-    bgClass = 'bg-red-950/70 text-red-400 animate-pulse';
+    bgClass = 'bg-red-950/70 border-red-500/50 animate-pulse';
   } else if (isSameNumber && value !== 0) {
     bgClass = 'bg-indigo-950/70 border-indigo-500/50';
   } else if (isRelated) {
-    bgClass = 'bg-slate-800/50';
+    bgClass = 'bg-slate-900/60';
   }
 
-  // Text color logic
-  let textClass = 'text-cyan-400 font-semibold';
+  // Clear visual color distinction:
+  // 1. Generated clues: Crisp pure White with etched font
+  // 2. User filled correct (Locked): Vibrant Cyan (#22d3ee) with subtle glow
+  // 3. User filled in freeform: Sky Blue (#38bdf8)
+  // 4. User filled error: Bright Red (#f87171)
+  let textClass = 'text-sky-300 font-bold';
   if (given) {
-    textClass = 'text-white font-extrabold';
+    textClass = 'text-white font-black tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]';
   } else if (isError) {
-    textClass = 'text-red-400 font-bold';
+    textClass = 'text-red-400 font-black';
+  } else if (isLocked) {
+    textClass = 'text-cyan-400 font-black tracking-tight drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]';
   }
 
   return (
     <div
       onClick={onClick}
-      className={`relative aspect-square flex items-center justify-center cursor-pointer select-none transition-colors border border-slate-800 ${
+      className={`relative aspect-square flex items-center justify-center cursor-pointer select-none transition-colors border border-slate-800/80 ${
         isRightThick ? 'border-r-slate-500 border-r-2' : ''
       } ${isBottomThick ? 'border-b-slate-500 border-b-2' : ''} ${bgClass}`}
     >
+      {/* Given Clue Indicator: subtle dot */}
+      {given && (
+        <span
+          className="absolute top-1 left-1 w-1 h-1 rounded-full bg-slate-500/50"
+          title="Pre-generated clue"
+        />
+      )}
+
       {/* Opponent Focus Ghost Indicator */}
       {opponentColor && (
         <span

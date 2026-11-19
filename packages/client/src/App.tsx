@@ -80,7 +80,13 @@ export const App: React.FC = () => {
 
     const { row, col } = selectedCell;
     const isGiven = room.puzzle.initial[row][col] !== 0;
-    if (isGiven) return; // Cannot edit pre-filled clues
+    // Anti-abuse: correctly placed numbers in instant mode are permanently locked
+    const isAlreadySolved =
+      room.settings.validationMode === 'instant' &&
+      board[row]?.[col] !== 0 &&
+      board[row]?.[col] === room.puzzle.solution[row][col];
+
+    if (isGiven || isAlreadySolved) return; // Cannot edit pre-filled clues or already-solved cells
 
     const cellKey = `${row},${col}`;
 
@@ -145,7 +151,13 @@ export const App: React.FC = () => {
 
     const { row, col } = selectedCell;
     const isGiven = room.puzzle.initial[row][col] !== 0;
-    if (isGiven) return;
+    // Anti-abuse: correctly placed numbers in instant mode are permanently locked and cannot be erased
+    const isAlreadySolved =
+      room.settings.validationMode === 'instant' &&
+      board[row]?.[col] !== 0 &&
+      board[row]?.[col] === room.puzzle.solution[row][col];
+
+    if (isGiven || isAlreadySolved) return;
 
     const cellKey = `${row},${col}`;
 
@@ -168,13 +180,28 @@ export const App: React.FC = () => {
 
   // Undo action
   const handleUndo = useCallback(() => {
-    if (history.length === 0) return;
+    if (history.length === 0 || !room || !room.puzzle) return;
     const lastState = history[history.length - 1];
+
+    // Ensure locked correct cells in instant mode are not reverted by undo
+    const safeRestoredBoard = lastState.board.map((r, rIdx) =>
+      r.map((val, cIdx) => {
+        if (
+          room.settings.validationMode === 'instant' &&
+          board[rIdx]?.[cIdx] !== 0 &&
+          board[rIdx]?.[cIdx] === room.puzzle!.solution[rIdx][cIdx]
+        ) {
+          return board[rIdx][cIdx];
+        }
+        return val;
+      })
+    );
+
     setHistory(h => h.slice(0, -1));
-    setBoard(lastState.board);
+    setBoard(safeRestoredBoard);
     setNotes(lastState.notes);
-    verifyBoard(lastState.board);
-  }, [history, verifyBoard]);
+    verifyBoard(safeRestoredBoard);
+  }, [history, room, board, verifyBoard]);
 
   // Keyboard navigation & inputs
   useEffect(() => {

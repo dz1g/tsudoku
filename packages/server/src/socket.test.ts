@@ -94,20 +94,49 @@ test('End-to-End Socket Multiplayer Flow', async (t) => {
     }
 
     const correctVal = puzzle.solution[targetR][targetC];
-    const wrongVal = correctVal === 9 ? 1 : correctVal + 1;
 
+    let initialScore = 0;
     // Test correct move
     const correctPromise = new Promise<void>((resolve) => {
       client1.once('game:cell_result', (result: any) => {
         assert.strictEqual(result.isValid, true);
         assert.ok(result.deltaScore > 0);
+        assert.strictEqual(result.isLocked, true);
+        initialScore = result.currentScore;
         resolve();
       });
     });
     client1.emit('game:cell_update', { row: targetR, col: targetC, value: correctVal, timeSpentMs: 1500 });
     await correctPromise;
 
-    // Test wrong move
+    // Test anti-abuse: sending the same cell again must grant 0 points
+    const abusePromise = new Promise<void>((resolve) => {
+      client1.once('game:cell_result', (result: any) => {
+        assert.strictEqual(result.isValid, true);
+        assert.strictEqual(result.deltaScore, 0);
+        assert.strictEqual(result.currentScore, initialScore);
+        assert.strictEqual(result.isLocked, true);
+        resolve();
+      });
+    });
+    client1.emit('game:cell_update', { row: targetR, col: targetC, value: correctVal, timeSpentMs: 1000 });
+    await abusePromise;
+
+    // Find a second empty cell for testing incorrect placement
+    let targetR2 = -1, targetC2 = -1;
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (puzzle.initial[r][c] === 0 && !(r === targetR && c === targetC)) {
+          targetR2 = r;
+          targetC2 = c;
+          break;
+        }
+      }
+      if (targetR2 !== -1) break;
+    }
+    const wrongVal = puzzle.solution[targetR2][targetC2] === 9 ? 1 : puzzle.solution[targetR2][targetC2] + 1;
+
+    // Test wrong move on second empty cell
     const wrongPromise = new Promise<void>((resolve) => {
       client1.once('game:cell_result', (result: any) => {
         assert.strictEqual(result.isValid, false);
@@ -115,7 +144,7 @@ test('End-to-End Socket Multiplayer Flow', async (t) => {
         resolve();
       });
     });
-    client1.emit('game:cell_update', { row: targetR, col: targetC, value: wrongVal, timeSpentMs: 1000 });
+    client1.emit('game:cell_update', { row: targetR2, col: targetC2, value: wrongVal, timeSpentMs: 1000 });
     await wrongPromise;
   });
 

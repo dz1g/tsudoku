@@ -108,6 +108,7 @@ export function setupSocketHandlers(
           isValid: updateResult.isValid,
           deltaScore: updateResult.deltaScore || 0,
           currentScore: player.score,
+          isLocked: updateResult.isLocked,
         });
 
         // Broadcast player progress & score

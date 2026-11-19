@@ -87,7 +87,7 @@ export interface ServerToClientEvents {
   'room:started': (data: { room: Room; startTime: number }) => void;
   'player:progress': (data: { playerId: string; progress: number; score: number; mistakes: number; isComplete: boolean }) => void;
   'player:cell_focus': (data: { playerId: string; cell: { row: number; col: number } | null }) => void;
-  'game:cell_result': (data: { row: number; col: number; isValid: boolean; deltaScore: number; currentScore: number }) => void;
+  'game:cell_result': (data: { row: number; col: number; isValid: boolean; deltaScore: number; currentScore: number; isLocked?: boolean }) => void;
   'game:player_finished': (data: { playerId: string; rank: number; finishTimeMs: number; score: number }) => void;
   'game:ended': (data: { room: Room; podium: PodiumEntry[] }) => void;
   'error': (data: { message: string }) => void;

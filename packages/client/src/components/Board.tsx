@@ -63,6 +63,14 @@ export const Board: React.FC<BoardProps> = ({
               !!solution &&
               solution[r]?.[c] !== val;
 
+            // In instant mode, locked if user filled correctly
+            const isLocked =
+              validationMode === 'instant' &&
+              !given &&
+              val !== 0 &&
+              !!solution &&
+              solution[r]?.[c] === val;
+
             const cellKey = `${r},${c}`;
             const cellNotes = notes[cellKey] || [];
             const oppColor = focusMap[cellKey];
@@ -74,6 +82,7 @@ export const Board: React.FC<BoardProps> = ({
                 col={c}
                 value={val}
                 given={given}
+                isLocked={isLocked}
                 notes={cellNotes}
                 isSelected={isSelected}
                 isRelated={isRelated}
@@ -84,6 +93,24 @@ export const Board: React.FC<BoardProps> = ({
               />
             );
           })
+        )}
+      </div>
+
+      {/* Visual Color Legend */}
+      <div className="flex items-center justify-center gap-4 mt-2.5 text-[11px] font-medium text-slate-400">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded bg-slate-100 shadow-sm" />
+          <span className="text-slate-200">Generated Clue</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded bg-cyan-400 shadow-sm shadow-cyan-500/50" />
+          <span className="text-cyan-300">Your Filled Number</span>
+        </span>
+        {validationMode === 'instant' && (
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded bg-red-500 shadow-sm" />
+            <span className="text-red-400">Mistake</span>
+          </span>
         )}
       </div>
     </div>
