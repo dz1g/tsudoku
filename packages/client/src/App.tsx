@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { SudokuEngine } from '@tsudoku/shared';
 import { useSocket } from './hooks/useSocket';
 import { Header } from './components/Header';
 import { Lobby } from './components/Lobby';
@@ -66,17 +67,35 @@ export const App: React.FC = () => {
     }
   }, [room?.status, room?.seed]);
 
+  // Check if current player has fully solved the board
+  const isBoardSolved = useMemo(() => {
+    if (!room || !room.puzzle || board.length !== 9) return false;
+    const playerCompleted = !!(playerId && room.players[playerId]?.completed);
+    if (playerCompleted) return true;
+    return SudokuEngine.isBoardSolved(board, room.puzzle.solution);
+  }, [room, board, playerId]);
+
+  // When board is solved, clear selection and play victory fanfare
+  useEffect(() => {
+    if (isBoardSolved) {
+      setSelectedCell(null);
+      selectCell(null);
+      sounds.playVictory();
+    }
+  }, [isBoardSolved, selectCell]);
+
   // Focus selection handler
   const handleSelectCell = useCallback((row: number, col: number) => {
+    if (isBoardSolved) return; // Cannot select tiles when board is solved
     sounds.playClick();
     const cell = { row, col };
     setSelectedCell(cell);
     selectCell(cell);
-  }, [selectCell]);
+  }, [selectCell, isBoardSolved]);
 
   // Number input handler
   const handleNumberInput = useCallback((num: number) => {
-    if (!room || room.status !== 'PLAYING' || !selectedCell || !room.puzzle) return;
+    if (!room || room.status !== 'PLAYING' || !selectedCell || !room.puzzle || isBoardSolved) return;
 
     const { row, col } = selectedCell;
     const isGiven = room.puzzle.initial[row][col] !== 0;
@@ -147,7 +166,7 @@ export const App: React.FC = () => {
 
   // Erase cell content
   const handleErase = useCallback(() => {
-    if (!room || room.status !== 'PLAYING' || !selectedCell || !room.puzzle) return;
+    if (!room || room.status !== 'PLAYING' || !selectedCell || !room.puzzle || isBoardSolved) return;
 
     const { row, col } = selectedCell;
     const isGiven = room.puzzle.initial[row][col] !== 0;
@@ -180,7 +199,7 @@ export const App: React.FC = () => {
 
   // Undo action
   const handleUndo = useCallback(() => {
-    if (history.length === 0 || !room || !room.puzzle) return;
+    if (history.length === 0 || !room || !room.puzzle || isBoardSolved) return;
     const lastState = history[history.length - 1];
 
     // Ensure locked correct cells in instant mode are not reverted by undo
@@ -206,7 +225,7 @@ export const App: React.FC = () => {
   // Keyboard navigation & inputs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (room?.status !== 'PLAYING') return;
+      if (room?.status !== 'PLAYING' || isBoardSolved) return;
 
       // Number keys 1-9
       if (e.key >= '1' && e.key <= '9') {
@@ -328,6 +347,7 @@ export const App: React.FC = () => {
                 opponentFocus={opponentFocus}
                 opponentColors={opponentColors}
                 validationMode={room.settings.validationMode}
+                isBoardSolved={isBoardSolved}
               />
 
               <Keypad
@@ -340,6 +360,7 @@ export const App: React.FC = () => {
                 validationMode={room.settings.validationMode}
                 numberCounts={numberCounts}
                 canUndo={history.length > 0}
+                disabled={isBoardSolved}
               />
             </div>
 

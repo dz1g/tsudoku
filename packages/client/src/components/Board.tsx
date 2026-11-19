@@ -11,6 +11,7 @@ interface BoardProps {
   opponentFocus: Record<string, { row: number; col: number } | null>;
   opponentColors: Record<string, string>;
   validationMode: 'instant' | 'freeform';
+  isBoardSolved?: boolean;
 }
 
 export const Board: React.FC<BoardProps> = ({
@@ -23,6 +24,7 @@ export const Board: React.FC<BoardProps> = ({
   opponentFocus,
   opponentColors,
   validationMode,
+  isBoardSolved,
 }) => {
   const selectedValue =
     selectedCell && current[selectedCell.row] ? current[selectedCell.row][selectedCell.col] : 0;
@@ -36,16 +38,23 @@ export const Board: React.FC<BoardProps> = ({
   }
 
   return (
-    <div className="w-full max-w-[500px] aspect-square mx-auto bg-slate-950 p-2 sm:p-3 rounded-2xl border-4 border-slate-700 shadow-2xl">
+    <div
+      className={`w-full max-w-[500px] aspect-square mx-auto bg-slate-950 p-2 sm:p-3 rounded-2xl border-4 transition-all duration-700 shadow-2xl ${
+        isBoardSolved
+          ? 'border-emerald-500 shadow-emerald-500/30 ring-4 ring-emerald-500/20'
+          : 'border-slate-700'
+      }`}
+    >
       <div className="grid grid-cols-9 grid-rows-9 w-full h-full border border-slate-700 rounded-lg overflow-hidden">
         {Array.from({ length: 9 }).map((_, r) =>
           Array.from({ length: 9 }).map((_, c) => {
             const val = current[r]?.[c] ?? 0;
             const given = initial[r]?.[c] !== 0;
-            const isSelected = selectedCell?.row === r && selectedCell?.col === c;
+            const isSelected = !isBoardSolved && selectedCell?.row === r && selectedCell?.col === c;
 
             // Related if same row, col, or 3x3 block
             const isRelated =
+              !isBoardSolved &&
               !!selectedCell &&
               (selectedCell.row === r ||
                 selectedCell.col === c ||
@@ -53,10 +62,11 @@ export const Board: React.FC<BoardProps> = ({
                   Math.floor(selectedCell.col / 3) === Math.floor(c / 3)));
 
             const isSameNumber =
-              selectedValue !== 0 && val !== 0 && val === selectedValue;
+              !isBoardSolved && selectedValue !== 0 && val !== 0 && val === selectedValue;
 
             // In instant mode, error if not given, non-zero, and does not match solution
             const isError =
+              !isBoardSolved &&
               validationMode === 'instant' &&
               !given &&
               val !== 0 &&
@@ -83,6 +93,7 @@ export const Board: React.FC<BoardProps> = ({
                 value={val}
                 given={given}
                 isLocked={isLocked}
+                isBoardSolved={isBoardSolved}
                 notes={cellNotes}
                 isSelected={isSelected}
                 isRelated={isRelated}
@@ -96,23 +107,31 @@ export const Board: React.FC<BoardProps> = ({
         )}
       </div>
 
-      {/* Visual Color Legend */}
-      <div className="flex items-center justify-center gap-4 mt-2.5 text-[11px] font-medium text-slate-400">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded bg-slate-100 shadow-sm" />
-          <span className="text-slate-200">Generated Clue</span>
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded bg-cyan-400 shadow-sm shadow-cyan-500/50" />
-          <span className="text-cyan-300">Your Filled Number</span>
-        </span>
-        {validationMode === 'instant' && (
+      {/* Visual State / Legend */}
+      {isBoardSolved ? (
+        <div className="flex items-center justify-center gap-2 mt-2.5 text-xs font-black text-emerald-400 tracking-wide animate-pulse">
+          <span>✨</span>
+          <span>BOARD SOLVED! ALL 81 TILES FIXED & LOCKED</span>
+          <span>✨</span>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-4 mt-2.5 text-[11px] font-medium text-slate-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded bg-red-500 shadow-sm" />
-            <span className="text-red-400">Mistake</span>
+            <span className="w-2.5 h-2.5 rounded bg-slate-100 shadow-sm" />
+            <span className="text-slate-200">Generated Clue</span>
           </span>
-        )}
-      </div>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded bg-cyan-400 shadow-sm shadow-cyan-500/50" />
+            <span className="text-cyan-300">Your Filled Number</span>
+          </span>
+          {validationMode === 'instant' && (
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded bg-red-500 shadow-sm" />
+              <span className="text-red-400">Mistake</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 };

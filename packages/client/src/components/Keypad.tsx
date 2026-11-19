@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pencil, Delete, RotateCcw, CheckCircle } from 'lucide-react';
+import { Pencil, Delete, RotateCcw, CheckCircle, Trophy } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 interface KeypadProps {
@@ -12,6 +12,7 @@ interface KeypadProps {
   validationMode: 'instant' | 'freeform';
   numberCounts: Record<number, number>; // counts of placed numbers (out of 9)
   canUndo: boolean;
+  disabled?: boolean;
 }
 
 export const Keypad: React.FC<KeypadProps> = ({
@@ -24,7 +25,22 @@ export const Keypad: React.FC<KeypadProps> = ({
   validationMode,
   numberCounts,
   canUndo,
+  disabled = false,
 }) => {
+  if (disabled) {
+    return (
+      <div className="w-full max-w-[500px] mx-auto p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-center animate-fade-in shadow-lg shadow-emerald-500/10">
+        <div className="flex items-center justify-center gap-2 text-emerald-400 font-black text-sm tracking-wide">
+          <Trophy className="w-4 h-4" />
+          <span>PUZZLE SOLVED! ALL NUMBERS FIXED & LOCKED</span>
+        </div>
+        <p className="text-xs text-slate-400 mt-1">
+          Enjoy the victory! Reviewing final standings...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-[500px] mx-auto space-y-3">
       {/* Utility Action Buttons */}
