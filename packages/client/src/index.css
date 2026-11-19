@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 min-h-screen font-sans;
+  }
+}
+
+/* Custom styles for Sudoku cell grid */
+.sudoku-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  user-select: none;
+}
+
+/* 3x3 block borders */
+.border-b-thick {
+  border-bottom-width: 3px !important;
+  border-bottom-color: #64748b !important;
+}
+
+.border-r-thick {
+  border-right-width: 3px !important;
+  border-right-color: #64748b !important;
+}
