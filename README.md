@@ -1,5 +1,7 @@
 # 🧩 Tsudoku - Realtime Multiplayer Sudoku
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dz1g/tsudoku)
+
 Tsudoku is a fast-paced real-time multiplayer Sudoku web application built with TypeScript, React, Tailwind CSS, and Node.js (Socket.IO).
 
 ## ✨ Features
