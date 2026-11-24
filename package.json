@@ -10,8 +10,10 @@
     "build": "npm run build --workspace=@tsudoku/shared && npm run build --workspace=@tsudoku/server && npm run build --workspace=@tsudoku/client",
     "start": "npm run start --workspace=@tsudoku/server"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.0",
+  "dependencies": {
     "typescript": "^5.6.3"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }
