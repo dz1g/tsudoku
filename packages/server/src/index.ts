@@ -28,8 +28,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
 const roomManager = new RoomManager();
 setupSocketHandlers(io, roomManager);
 
-// Health check endpoint
-app.get('/health', (_req, res) => {
+// Health check endpoints (Render probes /healthz or /health)
+app.get(['/health', '/healthz'], (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
@@ -42,7 +42,7 @@ if (fs.existsSync(clientDistPath)) {
   });
 }
 
-const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => {
-  console.log(`Tsudoku server listening on http://localhost:${PORT}`);
+const PORT = Number(process.env.PORT) || 3001;
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Tsudoku server listening on http://0.0.0.0:${PORT}`);
 });
