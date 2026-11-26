@@ -11,9 +11,14 @@ interface CellProps {
   isSelected: boolean;
   isRelated: boolean;
   isSameNumber: boolean;
+  isHoverRelated?: boolean; // Cursor spotlight on row/col
+  isHovered?: boolean;
+  isSameHoverNumber?: boolean;
   isError: boolean;
   opponentColor?: string;
   onClick: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export const Cell: React.FC<CellProps> = ({
@@ -27,27 +32,38 @@ export const Cell: React.FC<CellProps> = ({
   isSelected,
   isRelated,
   isSameNumber,
+  isHoverRelated,
+  isHovered,
+  isSameHoverNumber,
   isError,
   opponentColor,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }) => {
   // Determine border styles for 3x3 subgrids
   const isRightThick = col === 2 || col === 5;
   const isBottomThick = row === 2 || row === 5;
 
-  // Background styling logic
-  let bgClass = given ? 'bg-slate-900/95' : 'bg-slate-950/70 hover:bg-slate-900/60';
+  // Background spotlighting logic (layered hierarchically):
+  let bgClass = given ? 'bg-slate-900/95' : 'bg-slate-950/75';
 
   if (isBoardSolved) {
     bgClass = 'animate-solved-cell bg-emerald-950/30 border-emerald-500/40 cursor-default pointer-events-none';
   } else if (isSelected) {
-    bgClass = 'bg-indigo-600/40 ring-2 ring-indigo-400 z-10';
+    bgClass = 'bg-indigo-600/40 ring-2 ring-indigo-400 z-20 shadow-md';
   } else if (isError) {
     bgClass = 'bg-red-950/70 border-red-500/50 animate-pulse';
   } else if (isSameNumber && value !== 0) {
-    bgClass = 'bg-indigo-950/70 border-indigo-500/50';
+    bgClass = 'bg-indigo-950/90 border-cyan-400/60 ring-1 ring-cyan-400/40 shadow-sm z-10';
   } else if (isRelated) {
-    bgClass = 'bg-slate-900/60';
+    bgClass = 'bg-slate-800/65';
+  } else if (isSameHoverNumber && value !== 0) {
+    bgClass = 'bg-indigo-950/60 border-cyan-400/40';
+  } else if (isHovered) {
+    bgClass = 'bg-slate-800/55 ring-1 ring-slate-600/60';
+  } else if (isHoverRelated) {
+    bgClass = 'bg-slate-800/35 transition-colors duration-150';
   }
 
   // Text color logic:
@@ -73,6 +89,8 @@ export const Cell: React.FC<CellProps> = ({
   return (
     <div
       onClick={isBoardSolved ? undefined : onClick}
+      onMouseEnter={isBoardSolved ? undefined : onMouseEnter}
+      onMouseLeave={isBoardSolved ? undefined : onMouseLeave}
       style={{ animationDelay: rippleDelay }}
       className={`relative aspect-square flex items-center justify-center select-none transition-colors border border-slate-800/80 ${
         isRightThick ? 'border-r-slate-500 border-r-2' : ''

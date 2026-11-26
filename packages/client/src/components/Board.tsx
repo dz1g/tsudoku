@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Cell } from './Cell';
 
 interface BoardProps {
@@ -26,8 +26,13 @@ export const Board: React.FC<BoardProps> = ({
   validationMode,
   isBoardSolved,
 }) => {
+  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
+
   const selectedValue =
     selectedCell && current[selectedCell.row] ? current[selectedCell.row][selectedCell.col] : 0;
+
+  const hoveredValue =
+    hoveredCell && current[hoveredCell.row] ? current[hoveredCell.row][hoveredCell.col] : 0;
 
   // Build map of cell -> opponent color who is focusing on it
   const focusMap: Record<string, string> = {};
@@ -45,14 +50,17 @@ export const Board: React.FC<BoardProps> = ({
           : 'border-slate-700'
       }`}
     >
-      <div className="grid grid-cols-9 grid-rows-9 w-full h-full border border-slate-700 rounded-lg overflow-hidden">
+      <div
+        onMouseLeave={() => setHoveredCell(null)}
+        className="grid grid-cols-9 grid-rows-9 w-full h-full border border-slate-700 rounded-lg overflow-hidden"
+      >
         {Array.from({ length: 9 }).map((_, r) =>
           Array.from({ length: 9 }).map((_, c) => {
             const val = current[r]?.[c] ?? 0;
             const given = initial[r]?.[c] !== 0;
             const isSelected = !isBoardSolved && selectedCell?.row === r && selectedCell?.col === c;
 
-            // Related if same row, col, or 3x3 block
+            // Related if same row, col, or 3x3 block as selected cell
             const isRelated =
               !isBoardSolved &&
               !!selectedCell &&
@@ -61,8 +69,29 @@ export const Board: React.FC<BoardProps> = ({
                 (Math.floor(selectedCell.row / 3) === Math.floor(r / 3) &&
                   Math.floor(selectedCell.col / 3) === Math.floor(c / 3)));
 
+            // Spotlight matching numbers across the board
             const isSameNumber =
               !isBoardSolved && selectedValue !== 0 && val !== 0 && val === selectedValue;
+
+            // Cursor spotlight following the hovered cell
+            const isHovered = !isBoardSolved && hoveredCell?.row === r && hoveredCell?.col === c;
+            const isHoverRelated =
+              !isBoardSolved &&
+              !!hoveredCell &&
+              !isSelected &&
+              (hoveredCell.row === r ||
+                hoveredCell.col === c ||
+                (Math.floor(hoveredCell.row / 3) === Math.floor(r / 3) &&
+                  Math.floor(hoveredCell.col / 3) === Math.floor(c / 3)));
+
+            // Spotlight numbers matching the hovered cell if no selection is active
+            const isSameHoverNumber =
+              !isBoardSolved &&
+              !isSelected &&
+              selectedValue === 0 &&
+              hoveredValue !== 0 &&
+              val !== 0 &&
+              val === hoveredValue;
 
             // In instant mode, error if not given, non-zero, and does not match solution
             const isError =
@@ -98,9 +127,13 @@ export const Board: React.FC<BoardProps> = ({
                 isSelected={isSelected}
                 isRelated={isRelated}
                 isSameNumber={isSameNumber}
+                isHoverRelated={isHoverRelated}
+                isHovered={isHovered}
+                isSameHoverNumber={isSameHoverNumber}
                 isError={isError}
                 opponentColor={oppColor}
                 onClick={() => onSelectCell(r, c)}
+                onMouseEnter={() => setHoveredCell({ row: r, col: c })}
               />
             );
           })

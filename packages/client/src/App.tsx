@@ -138,16 +138,10 @@ export const App: React.FC = () => {
     );
     setBoard(nextBoard);
 
-    // Clear notes in this cell
-    setNotes(prev => {
-      const copy = { ...prev };
-      delete copy[cellKey];
-      return copy;
-    });
-
-    // Check instant feedback chime
+    // Check instant feedback chime & validity
+    let isCorrect = true;
     if (room.settings.validationMode === 'instant') {
-      const isCorrect = room.puzzle.solution[row][col] === num;
+      isCorrect = room.puzzle.solution[row][col] === num;
       if (isCorrect) {
         sounds.playCorrect();
       } else {
@@ -156,6 +150,41 @@ export const App: React.FC = () => {
     } else {
       sounds.playClick();
     }
+
+    // Auto-remove notes:
+    // When putting a number in a cell, remove that number from all candidate notes
+    // in the same row, same column, and same 3x3 small cubicle, unless it is a wrong number.
+    setNotes(prev => {
+      const copy = { ...prev };
+      // Always remove notes in the cell that received the number
+      delete copy[cellKey];
+
+      // Prune related notes only if the number is valid/correct
+      if (isCorrect) {
+        const boxStartR = Math.floor(row / 3) * 3;
+        const boxStartC = Math.floor(col / 3) * 3;
+
+        for (const [key, candidateList] of Object.entries(copy)) {
+          if (!candidateList || candidateList.length === 0) continue;
+          const [rStr, cStr] = key.split(',');
+          const r = parseInt(rStr, 10);
+          const c = parseInt(cStr, 10);
+
+          const inSameRow = r === row;
+          const inSameCol = c === col;
+          const inSameBox =
+            r >= boxStartR && r < boxStartR + 3 && c >= boxStartC && c < boxStartC + 3;
+
+          if (inSameRow || inSameCol || inSameBox) {
+            if (candidateList.includes(num)) {
+              copy[key] = candidateList.filter(n => n !== num);
+            }
+          }
+        }
+      }
+
+      return copy;
+    });
 
     // Send cell update to server for scoring
     sendCellUpdate(row, col, num, false, timeSpentMs);
