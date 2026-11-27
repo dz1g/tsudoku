@@ -174,7 +174,10 @@ export const Keypad: React.FC<KeypadProps> = ({
           return (
             <button
               key={num}
+              type="button"
+              disabled={isComplete}
               onClick={() => {
+                if (isComplete) return;
                 sounds.playClick();
                 if (inputMode === 'number-first') {
                   // Toggle active number in number-first mode
@@ -185,16 +188,26 @@ export const Keypad: React.FC<KeypadProps> = ({
                 }
               }}
               className={`relative flex flex-col items-center justify-center py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border transition-all ${
-                isActiveNumber
+                isComplete
+                  ? 'bg-slate-950/40 border-slate-900/60 text-slate-700 opacity-40 cursor-not-allowed pointer-events-none select-none shadow-none'
+                  : isActiveNumber
                   ? 'bg-cyan-600 border-cyan-300 ring-2 sm:ring-4 ring-cyan-400/60 scale-105 shadow-lg shadow-cyan-500/40 text-white z-10'
-                  : isComplete
-                  ? 'bg-slate-950/50 border-slate-800/50 text-slate-600 opacity-60'
                   : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-white hover:border-slate-700 active:scale-95 shadow-sm'
               }`}
             >
-              <span className="text-base sm:text-lg font-bold leading-tight">{num}</span>
-              <span className={`text-[9px] sm:text-[10px] font-mono leading-none mt-0.5 ${isActiveNumber ? 'text-cyan-100 font-bold' : 'text-slate-500'}`}>
-                {Math.max(0, 9 - count)}
+              <span className={`text-base sm:text-lg font-bold leading-tight ${isComplete ? 'text-slate-600 line-through' : ''}`}>
+                {num}
+              </span>
+              <span
+                className={`text-[9px] sm:text-[10px] font-mono leading-none mt-0.5 ${
+                  isComplete
+                    ? 'text-slate-700 font-bold'
+                    : isActiveNumber
+                    ? 'text-cyan-100 font-bold'
+                    : 'text-slate-500'
+                }`}
+              >
+                {isComplete ? '✓' : Math.max(0, 9 - count)}
               </span>
             </button>
           );

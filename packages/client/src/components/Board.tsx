@@ -41,13 +41,11 @@ export const Board: React.FC<BoardProps> = ({
     hoveredCell && current[hoveredCell.row] ? current[hoveredCell.row][hoveredCell.col] : 0;
 
   // The digit to actively spotlight across the grid:
-  // In number-first mode, it's the activeNumber. In cell-first mode, it's the selected cell's value.
+  // In number-first mode, it's the activeNumber (resets to 0 if null). In cell-first mode, it's the selected cell's value.
   const targetSpotlightDigit =
-    inputMode === 'number-first' && activeNumber !== null
-      ? activeNumber
-      : selectedValue !== 0
-      ? selectedValue
-      : 0;
+    inputMode === 'number-first'
+      ? (activeNumber !== null ? activeNumber : 0)
+      : (selectedValue !== 0 ? selectedValue : 0);
 
   // Compute all rows, columns, and 3x3 blocks covered by the spotlighted digit
   const { coveredRows, coveredCols, coveredBoxes } = useMemo(() => {
@@ -94,7 +92,12 @@ export const Board: React.FC<BoardProps> = ({
           Array.from({ length: 9 }).map((_, c) => {
             const val = current[r]?.[c] ?? 0;
             const given = initial[r]?.[c] !== 0;
-            const isSelected = !isBoardSolved && selectedCell?.row === r && selectedCell?.col === c;
+            // In cell-first mode only: isSelected for selected cell
+            const isSelected =
+              !isBoardSolved &&
+              inputMode === 'cell-first' &&
+              selectedCell?.row === r &&
+              selectedCell?.col === c;
 
             // In cell-first mode: related if same row, col, or 3x3 block as selected cell
             const isRelated =

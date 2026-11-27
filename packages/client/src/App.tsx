@@ -40,18 +40,54 @@ export const App: React.FC = () => {
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [isNotesMode, setIsNotesMode] = useState(false);
   const [lastMoveTime, setLastMoveTime] = useState<number>(Date.now());
+
+  // Compute number counts currently on board
+  const numberCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const val = board[r]?.[c];
+        if (val && val > 0) {
+          counts[val] = (counts[val] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [board]);
+
   const [inputMode, setInputMode] = useState<InputMode>(() => {
-    return (localStorage.getItem('tsudoku_input_mode') as InputMode) || 'cell-first';
+    return (localStorage.getItem('tsudoku_input_mode_v2') as InputMode) || 'number-first';
   });
   const [activeNumber, setActiveNumber] = useState<number | null>(null);
 
   const handleSelectInputMode = useCallback((mode: InputMode) => {
     setInputMode(mode);
-    localStorage.setItem('tsudoku_input_mode', mode);
-    if (mode === 'cell-first') {
-      setActiveNumber(null);
+    localStorage.setItem('tsudoku_input_mode_v2', mode);
+    setActiveNumber(null);
+    setSelectedCell(null);
+    selectCell(null);
+  }, [selectCell]);
+
+  const handleSelectActiveNumber = useCallback((num: number | null) => {
+    if (num !== null && (numberCounts[num] || 0) >= 9) {
+      return; // Finished number cannot be selected
     }
-  }, []);
+    setActiveNumber(num);
+    if (num === null) {
+      // Reset all highlights on the board
+      setSelectedCell(null);
+      selectCell(null);
+    }
+  }, [numberCounts, selectCell]);
+
+  // If active number becomes complete (e.g. 9 placed), automatically deselect it and reset highlights
+  useEffect(() => {
+    if (activeNumber !== null && (numberCounts[activeNumber] || 0) >= 9) {
+      setActiveNumber(null);
+      setSelectedCell(null);
+      selectCell(null);
+    }
+  }, [numberCounts, activeNumber, selectCell]);
 
   // Save nickname to localStorage
   useEffect(() => {
@@ -203,18 +239,23 @@ export const App: React.FC = () => {
     if (isBoardSolved) return; // Cannot select tiles when board is solved
     sounds.playClick();
     const cell = { row, col };
-    setSelectedCell(cell);
-    selectCell(cell);
 
-    if (inputMode === 'number-first' && activeNumber !== null) {
-      handleNumberInput(activeNumber, cell);
-    } else if (inputMode === 'number-first' && activeNumber === null) {
-      const cellVal = board[row]?.[col] || 0;
-      if (cellVal > 0) {
-        setActiveNumber(cellVal);
+    if (inputMode === 'number-first') {
+      if (activeNumber !== null) {
+        // Place number without highlighting this cell as selectedCell (no need to highlight last successful number entry)
+        handleNumberInput(activeNumber, cell);
+      } else {
+        // In number-first mode with no active number: click to pick this cell's number (unless finished)
+        const cellVal = board[row]?.[col] || 0;
+        if (cellVal > 0 && (numberCounts[cellVal] || 0) < 9) {
+          handleSelectActiveNumber(cellVal);
+        }
       }
+    } else {
+      setSelectedCell(cell);
+      selectCell(cell);
     }
-  }, [selectCell, isBoardSolved, inputMode, activeNumber, handleNumberInput, board]);
+  }, [selectCell, isBoardSolved, inputMode, activeNumber, handleNumberInput, board, numberCounts, handleSelectActiveNumber]);
 
   // Erase cell content
   const handleErase = useCallback(() => {
@@ -283,19 +324,19 @@ export const App: React.FC = () => {
       if (e.key >= '1' && e.key <= '9') {
         e.preventDefault();
         const num = parseInt(e.key, 10);
+        if ((numberCounts[num] || 0) >= 9) return; // Finished number cannot be selected!
+
         if (inputMode === 'number-first') {
-          setActiveNumber(prev => (prev === num ? null : num));
+          handleSelectActiveNumber(activeNumber === num ? null : num);
         } else {
           handleNumberInput(num);
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        if (inputMode === 'number-first' && activeNumber !== null) {
-          setActiveNumber(null);
-        } else {
-          setSelectedCell(null);
-          selectCell(null);
-        }
+        // Reset all highlights on the board
+        setActiveNumber(null);
+        setSelectedCell(null);
+        selectCell(null);
       } else if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
         handleErase();
@@ -341,21 +382,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [room?.status, isBoardSolved, inputMode, activeNumber, handleNumberInput, handleErase, handleUndo, selectCell]);
-
-  // Compute number counts currently on board
-  const numberCounts = useMemo(() => {
-    const counts: Record<number, number> = {};
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        const val = board[r]?.[c];
-        if (val && val > 0) {
-          counts[val] = (counts[val] || 0) + 1;
-        }
-      }
-    }
-    return counts;
-  }, [board]);
+  }, [room?.status, isBoardSolved, inputMode, activeNumber, numberCounts, handleSelectActiveNumber, handleNumberInput, handleErase, handleUndo, selectCell]);
 
   // Opponent player colors lookup
   const opponentColors = useMemo(() => {
@@ -451,7 +478,7 @@ export const App: React.FC = () => {
                 inputMode={inputMode}
                 onSelectInputMode={handleSelectInputMode}
                 activeNumber={activeNumber}
-                onSelectActiveNumber={setActiveNumber}
+                onSelectActiveNumber={handleSelectActiveNumber}
               />
 
               {/* Instructions / Controls hint */}
