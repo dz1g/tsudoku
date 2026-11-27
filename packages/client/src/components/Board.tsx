@@ -80,7 +80,7 @@ export const Board: React.FC<BoardProps> = ({
 
   return (
     <div
-      className={`w-full max-w-[500px] aspect-square mx-auto bg-slate-950 p-2 sm:p-3 rounded-2xl border-4 transition-all duration-700 shadow-2xl ${
+      className={`w-full max-w-[min(100%,330px,42vh)] md:max-w-[min(100%,480px,calc(100dvh-5.5rem))] max-h-[min(330px,42vh)] md:max-h-[min(480px,calc(100dvh-5.5rem))] aspect-square mx-auto bg-slate-950 p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl border-2 sm:border-4 transition-all duration-700 shadow-2xl ${
         isBoardSolved
           ? 'border-emerald-500 shadow-emerald-500/30 ring-4 ring-emerald-500/20'
           : 'border-slate-700'
@@ -88,7 +88,7 @@ export const Board: React.FC<BoardProps> = ({
     >
       <div
         onMouseLeave={() => setHoveredCell(null)}
-        className="grid grid-cols-9 grid-rows-9 w-full h-full border border-slate-700 rounded-lg overflow-hidden"
+        className="grid grid-cols-9 grid-rows-9 w-full h-full border border-slate-700 rounded-md sm:rounded-lg overflow-hidden"
       >
         {Array.from({ length: 9 }).map((_, r) =>
           Array.from({ length: 9 }).map((_, c) => {

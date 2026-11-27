@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-950 text-slate-100 min-h-screen font-sans;
+  html, body {
+    @apply bg-slate-950 text-slate-100 h-full overflow-hidden font-sans;
   }
 }
 

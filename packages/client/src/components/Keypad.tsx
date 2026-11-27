@@ -51,10 +51,10 @@ export const Keypad: React.FC<KeypadProps> = ({
   }
 
   return (
-    <div className="w-full max-w-[500px] mx-auto space-y-3">
+    <div className="w-full max-w-[480px] mx-auto space-y-1.5 sm:space-y-2">
       {/* Mode Switcher Pill */}
-      <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-1 rounded-xl text-xs font-semibold shadow-sm">
-        <span className="text-slate-400 pl-2 text-[11px] uppercase tracking-wider font-bold hidden sm:inline">
+      <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-0.5 sm:p-1 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-semibold shadow-sm">
+        <span className="text-slate-400 pl-2 text-[10px] sm:text-[11px] uppercase tracking-wider font-bold hidden sm:inline">
           Input Mode
         </span>
         <div className="flex w-full sm:w-auto gap-1">
@@ -64,13 +64,13 @@ export const Keypad: React.FC<KeypadProps> = ({
               sounds.playClick();
               onSelectInputMode('cell-first');
             }}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-1 sm:py-1.5 rounded-md sm:rounded-lg transition-all ${
               inputMode === 'cell-first'
                 ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <MousePointerClick className="w-3.5 h-3.5" />
+            <MousePointerClick className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>Cell First</span>
           </button>
           <button
@@ -79,13 +79,13 @@ export const Keypad: React.FC<KeypadProps> = ({
               sounds.playClick();
               onSelectInputMode('number-first');
             }}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-1 sm:py-1.5 rounded-md sm:rounded-lg transition-all ${
               inputMode === 'number-first'
                 ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-600/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Hash className="w-3.5 h-3.5" />
+            <Hash className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>Number First</span>
           </button>
         </div>
@@ -93,17 +93,17 @@ export const Keypad: React.FC<KeypadProps> = ({
 
       {/* Number-First Mode Active Status Bar */}
       {inputMode === 'number-first' && (
-        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-cyan-950/40 border border-cyan-800/40 text-xs">
-          <div className="flex items-center gap-2 text-cyan-300">
+        <div className="flex items-center justify-between px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-cyan-950/40 border border-cyan-800/40 text-[11px] sm:text-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-cyan-300">
             {activeNumber !== null ? (
               <>
-                <span className="w-5 h-5 rounded-md bg-cyan-500 text-slate-950 font-black flex items-center justify-center text-xs shadow-sm">
+                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-cyan-500 text-slate-950 font-black flex items-center justify-center text-[10px] sm:text-xs shadow-sm">
                   {activeNumber}
                 </span>
-                <span className="font-semibold">Click any empty cell to place {activeNumber}</span>
+                <span className="font-semibold truncate">Click empty cells to place {activeNumber}</span>
               </>
             ) : (
-              <span className="text-slate-400">Click a number below, then click cells to fill</span>
+              <span className="text-slate-400">Click a number below, then click cells</span>
             )}
           </div>
           {activeNumber !== null && (
@@ -112,9 +112,9 @@ export const Keypad: React.FC<KeypadProps> = ({
                 sounds.playClick();
                 onSelectActiveNumber(null);
               }}
-              className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-white bg-cyan-900/40 hover:bg-cyan-900/70 px-2 py-0.5 rounded border border-cyan-700/50 transition-colors"
+              className="flex items-center gap-1 text-[10px] sm:text-[11px] text-cyan-400 hover:text-white bg-cyan-900/40 hover:bg-cyan-900/70 px-1.5 py-0.5 rounded border border-cyan-700/50 transition-colors flex-shrink-0"
             >
-              <X className="w-3 h-3" />
+              <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               <span>Deselect</span>
             </button>
           )}
@@ -122,7 +122,7 @@ export const Keypad: React.FC<KeypadProps> = ({
       )}
 
       {/* Utility Action Buttons */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         <button
           onClick={() => {
             if (canUndo) {
@@ -131,9 +131,9 @@ export const Keypad: React.FC<KeypadProps> = ({
             }
           }}
           disabled={!canUndo}
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold text-xs sm:text-sm disabled:opacity-40 transition-colors shadow-sm"
+          className="flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold text-xs sm:text-sm disabled:opacity-40 transition-colors shadow-sm"
         >
-          <RotateCcw className="w-4 h-4 text-cyan-400" />
+          <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
           <span>Undo</span>
         </button>
 
@@ -142,13 +142,13 @@ export const Keypad: React.FC<KeypadProps> = ({
             sounds.playClick();
             onToggleNotes();
           }}
-          className={`flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold text-xs sm:text-sm transition-all shadow-sm ${
+          className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl border font-semibold text-xs sm:text-sm transition-all shadow-sm ${
             isNotesMode
               ? 'bg-indigo-600/30 border-indigo-400 text-indigo-300 ring-2 ring-indigo-500/40'
               : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300'
           }`}
         >
-          <Pencil className={`w-4 h-4 ${isNotesMode ? 'text-indigo-400' : 'text-slate-400'}`} />
+          <Pencil className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isNotesMode ? 'text-indigo-400' : 'text-slate-400'}`} />
           <span>Notes {isNotesMode ? 'ON' : 'OFF'}</span>
         </button>
 
@@ -157,15 +157,15 @@ export const Keypad: React.FC<KeypadProps> = ({
             sounds.playClick();
             onErase();
           }}
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold text-xs sm:text-sm transition-colors shadow-sm"
+          className="flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold text-xs sm:text-sm transition-colors shadow-sm"
         >
-          <Delete className="w-4 h-4 text-red-400" />
+          <Delete className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
           <span>Erase</span>
         </button>
       </div>
 
       {/* Number Buttons 1 to 9 */}
-      <div className="grid grid-cols-9 gap-1 sm:gap-2">
+      <div className="grid grid-cols-9 gap-1 sm:gap-1.5">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => {
           const count = numberCounts[num] || 0;
           const isComplete = count >= 9;
@@ -184,16 +184,16 @@ export const Keypad: React.FC<KeypadProps> = ({
                   onNumberInput(num);
                 }
               }}
-              className={`relative flex flex-col items-center justify-center py-2.5 sm:py-3.5 rounded-xl border transition-all ${
+              className={`relative flex flex-col items-center justify-center py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border transition-all ${
                 isActiveNumber
-                  ? 'bg-cyan-600 border-cyan-300 ring-4 ring-cyan-400/60 scale-105 shadow-lg shadow-cyan-500/40 text-white z-10'
+                  ? 'bg-cyan-600 border-cyan-300 ring-2 sm:ring-4 ring-cyan-400/60 scale-105 shadow-lg shadow-cyan-500/40 text-white z-10'
                   : isComplete
                   ? 'bg-slate-950/50 border-slate-800/50 text-slate-600 opacity-60'
                   : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-white hover:border-slate-700 active:scale-95 shadow-sm'
               }`}
             >
-              <span className="text-lg sm:text-xl font-bold">{num}</span>
-              <span className={`text-[10px] font-mono leading-none mt-0.5 ${isActiveNumber ? 'text-cyan-100 font-bold' : 'text-slate-500'}`}>
+              <span className="text-base sm:text-lg font-bold leading-tight">{num}</span>
+              <span className={`text-[9px] sm:text-[10px] font-mono leading-none mt-0.5 ${isActiveNumber ? 'text-cyan-100 font-bold' : 'text-slate-500'}`}>
                 {Math.max(0, 9 - count)}
               </span>
             </button>
@@ -208,9 +208,9 @@ export const Keypad: React.FC<KeypadProps> = ({
             sounds.playClick();
             onCheckBoard();
           }}
-          className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/25 transition-colors"
+          className="w-full py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-600/25 transition-colors text-xs sm:text-sm"
         >
-          <CheckCircle className="w-5 h-5" />
+          <CheckCircle className="w-4 h-4" />
           <span>Check / Submit Board</span>
         </button>
       )}

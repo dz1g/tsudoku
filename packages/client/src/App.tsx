@@ -373,14 +373,14 @@ export const App: React.FC = () => {
   const isHost = room && playerId ? room.players[playerId]?.isHost : false;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="h-screen h-dvh bg-slate-950 flex flex-col overflow-hidden select-none">
       <Header
         roomCode={room?.code}
         connected={connected}
         onLeaveRoom={room ? leaveRoom : undefined}
       />
 
-      <main className="flex-1 flex flex-col justify-center items-center py-4 px-2">
+      <main className="flex-1 min-h-0 flex flex-col justify-center items-center p-2 sm:p-3 overflow-hidden">
         {/* View 1: Lobby or Home */}
         {(!room || room.status === 'LOBBY' || room.status === 'COUNTDOWN') && (
           <Lobby
@@ -399,9 +399,18 @@ export const App: React.FC = () => {
 
         {/* View 2: Live Game Screen */}
         {room && (room.status === 'PLAYING' || room.status === 'FINISHED') && room.puzzle && (
-          <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-center gap-6 px-4">
-            {/* Left Column: Board & Keypad */}
-            <div className="w-full max-w-[500px] flex flex-col items-center gap-4">
+          <div className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-2 sm:gap-3 md:gap-6 px-2 sm:px-4">
+            {/* Mobile Scoreboard (top on mobile, hidden on desktop) */}
+            <div className="w-full max-w-[480px] md:hidden">
+              <Scoreboard
+                players={room.players}
+                currentPlayerId={playerId}
+                validationMode={room.settings.validationMode}
+              />
+            </div>
+
+            {/* Left / Center: Sudoku Board */}
+            <div className="flex-1 flex items-center justify-center min-h-0 w-full md:w-auto">
               <Board
                 initial={room.puzzle.initial}
                 current={board}
@@ -416,6 +425,17 @@ export const App: React.FC = () => {
                 inputMode={inputMode}
                 activeNumber={activeNumber}
               />
+            </div>
+
+            {/* Right: Scoreboard (desktop), Keypad & Controls */}
+            <div className="w-full max-w-[480px] md:w-[360px] lg:w-[400px] flex flex-col gap-1.5 sm:gap-2.5 justify-center min-h-0 flex-shrink-0">
+              <div className="hidden md:block">
+                <Scoreboard
+                  players={room.players}
+                  currentPlayerId={playerId}
+                  validationMode={room.settings.validationMode}
+                />
+              </div>
 
               <Keypad
                 onNumberInput={handleNumberInput}
@@ -433,26 +453,17 @@ export const App: React.FC = () => {
                 activeNumber={activeNumber}
                 onSelectActiveNumber={setActiveNumber}
               />
-            </div>
-
-            {/* Right Column: Live Race Standings & Game Info */}
-            <div className="w-full max-w-[500px] md:max-w-xs flex flex-col gap-4">
-              <Scoreboard
-                players={room.players}
-                currentPlayerId={playerId}
-                validationMode={room.settings.validationMode}
-              />
 
               {/* Instructions / Controls hint */}
-              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 text-xs text-slate-400 space-y-2">
-                <span className="font-bold text-slate-300 uppercase tracking-wider block">
+              <div className="hidden md:block bg-slate-900/60 border border-slate-800/80 rounded-xl p-2 text-[11px] text-slate-400 space-y-1 shadow-sm">
+                <span className="font-bold text-slate-300 uppercase tracking-wider block text-[10px]">
                   Quick Controls
                 </span>
-                <div className="grid grid-cols-2 gap-1.5 font-mono">
-                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">1-9</kbd> {inputMode === 'number-first' ? 'Pick num' : 'Enter num'}</div>
-                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">N / Space</kbd> Notes</div>
-                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">Arrows</kbd> Move</div>
-                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">{inputMode === 'number-first' && activeNumber !== null ? 'Esc' : 'Del'}</kbd> {inputMode === 'number-first' && activeNumber !== null ? 'Deselect' : 'Erase'}</div>
+                <div className="grid grid-cols-2 gap-1 font-mono text-[10px]">
+                  <div><kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">1-9</kbd> {inputMode === 'number-first' ? 'Pick num' : 'Enter num'}</div>
+                  <div><kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">N / Space</kbd> Notes</div>
+                  <div><kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">Arrows</kbd> Move</div>
+                  <div><kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">{inputMode === 'number-first' && activeNumber !== null ? 'Esc' : 'Del'}</kbd> {inputMode === 'number-first' && activeNumber !== null ? 'Deselect' : 'Erase'}</div>
                 </div>
               </div>
             </div>

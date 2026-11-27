@@ -75,7 +75,7 @@ export const Lobby: React.FC<LobbyProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-8">
+    <div className="w-full max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-6 overflow-y-auto max-h-full">
       {/* Nickname Selector Card */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl mb-6">
         <label className="block text-xs uppercase font-bold tracking-wider text-slate-400 mb-2">
