@@ -9,8 +9,9 @@ interface CellProps {
   isBoardSolved?: boolean; // Full board victory state
   notes: number[];
   isSelected: boolean;
-  isRelated: boolean;
-  isSameNumber: boolean;
+  isRelated: boolean; // Selected cell's row, col, or box
+  isNumberSpotlight?: boolean; // Covered row, col, or box for active number
+  isSameNumber: boolean; // Same number highlight
   isHoverRelated?: boolean; // Cursor spotlight on row/col
   isHovered?: boolean;
   isSameHoverNumber?: boolean;
@@ -31,6 +32,7 @@ export const Cell: React.FC<CellProps> = ({
   notes,
   isSelected,
   isRelated,
+  isNumberSpotlight,
   isSameNumber,
   isHoverRelated,
   isHovered,
@@ -45,25 +47,34 @@ export const Cell: React.FC<CellProps> = ({
   const isRightThick = col === 2 || col === 5;
   const isBottomThick = row === 2 || row === 5;
 
-  // Background spotlighting logic (layered hierarchically):
-  let bgClass = given ? 'bg-slate-900/95' : 'bg-slate-950/75';
+  // Background spotlighting logic (high contrast hierarchy):
+  let bgClass = given ? 'bg-slate-900' : 'bg-slate-950';
 
   if (isBoardSolved) {
-    bgClass = 'animate-solved-cell bg-emerald-950/30 border-emerald-500/40 cursor-default pointer-events-none';
+    bgClass = 'animate-solved-cell bg-emerald-950/40 border-emerald-500/50 cursor-default pointer-events-none';
   } else if (isSelected) {
-    bgClass = 'bg-indigo-600/40 ring-2 ring-indigo-400 z-20 shadow-md';
+    // High-visibility focus for the selected cell
+    bgClass = 'bg-indigo-600/70 ring-2 ring-indigo-300 z-20 shadow-lg shadow-indigo-500/40 text-white';
   } else if (isError) {
-    bgClass = 'bg-red-950/70 border-red-500/50 animate-pulse';
+    // High-visibility red for mistakes
+    bgClass = 'bg-red-950/90 border-red-500 ring-2 ring-red-500/60 animate-pulse z-10';
   } else if (isSameNumber && value !== 0) {
-    bgClass = 'bg-indigo-950/90 border-cyan-400/60 ring-1 ring-cyan-400/40 shadow-sm z-10';
+    // Vibrant spotlight on identical numbers across the board
+    bgClass = 'bg-cyan-950/90 border-cyan-400 ring-2 ring-cyan-400/80 shadow-md shadow-cyan-500/30 z-10 scale-[1.02]';
   } else if (isRelated) {
-    bgClass = 'bg-slate-800/65';
+    // High-contrast luminous tint on selected cell's row, column, and 3x3 box
+    bgClass = 'bg-indigo-950/80 border-indigo-900/60';
+  } else if (isNumberSpotlight) {
+    // High-contrast cross-hatch spotlight for active number in number-first mode
+    bgClass = 'bg-cyan-950/40 border-cyan-900/40';
   } else if (isSameHoverNumber && value !== 0) {
-    bgClass = 'bg-indigo-950/60 border-cyan-400/40';
+    bgClass = 'bg-cyan-950/70 border-cyan-400/50 ring-1 ring-cyan-400/40';
   } else if (isHovered) {
-    bgClass = 'bg-slate-800/55 ring-1 ring-slate-600/60';
+    // Hovered cell under cursor
+    bgClass = 'bg-slate-800/80 ring-2 ring-indigo-400/60 z-10';
   } else if (isHoverRelated) {
-    bgClass = 'bg-slate-800/35 transition-colors duration-150';
+    // Clearly visible lighter spotlight following the cursor's row and column
+    bgClass = 'bg-slate-800/60 transition-colors duration-100';
   }
 
   // Text color logic:

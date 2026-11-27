@@ -3,7 +3,7 @@ import { SudokuEngine } from '@tsudoku/shared';
 import { useSocket } from './hooks/useSocket';
 import { Header } from './components/Header';
 import { Lobby } from './components/Lobby';
-import { Board } from './components/Board';
+import { Board, InputMode } from './components/Board';
 import { Keypad } from './components/Keypad';
 import { Scoreboard } from './components/Scoreboard';
 import { PodiumModal } from './components/PodiumModal';
@@ -40,6 +40,18 @@ export const App: React.FC = () => {
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [isNotesMode, setIsNotesMode] = useState(false);
   const [lastMoveTime, setLastMoveTime] = useState<number>(Date.now());
+  const [inputMode, setInputMode] = useState<InputMode>(() => {
+    return (localStorage.getItem('tsudoku_input_mode') as InputMode) || 'cell-first';
+  });
+  const [activeNumber, setActiveNumber] = useState<number | null>(null);
+
+  const handleSelectInputMode = useCallback((mode: InputMode) => {
+    setInputMode(mode);
+    localStorage.setItem('tsudoku_input_mode', mode);
+    if (mode === 'cell-first') {
+      setActiveNumber(null);
+    }
+  }, []);
 
   // Save nickname to localStorage
   useEffect(() => {
@@ -63,6 +75,7 @@ export const App: React.FC = () => {
       setNotes({});
       setHistory([]);
       setSelectedCell(null);
+      setActiveNumber(null);
       setLastMoveTime(Date.now());
     }
   }, [room?.status, room?.seed]);
@@ -84,20 +97,12 @@ export const App: React.FC = () => {
     }
   }, [isBoardSolved, selectCell]);
 
-  // Focus selection handler
-  const handleSelectCell = useCallback((row: number, col: number) => {
-    if (isBoardSolved) return; // Cannot select tiles when board is solved
-    sounds.playClick();
-    const cell = { row, col };
-    setSelectedCell(cell);
-    selectCell(cell);
-  }, [selectCell, isBoardSolved]);
-
   // Number input handler
-  const handleNumberInput = useCallback((num: number) => {
-    if (!room || room.status !== 'PLAYING' || !selectedCell || !room.puzzle || isBoardSolved) return;
+  const handleNumberInput = useCallback((num: number, targetCell?: { row: number; col: number } | null) => {
+    const target = targetCell || selectedCell;
+    if (!room || room.status !== 'PLAYING' || !target || !room.puzzle || isBoardSolved) return;
 
-    const { row, col } = selectedCell;
+    const { row, col } = target;
     const isGiven = room.puzzle.initial[row][col] !== 0;
     // Anti-abuse: correctly placed numbers in instant mode are permanently locked
     const isAlreadySolved =
@@ -191,7 +196,25 @@ export const App: React.FC = () => {
 
     // Check board progress
     verifyBoard(nextBoard);
-  }, [room, selectedCell, isNotesMode, board, notes, lastMoveTime, sendCellUpdate, verifyBoard]);
+  }, [room, selectedCell, isNotesMode, board, notes, lastMoveTime, sendCellUpdate, verifyBoard, isBoardSolved]);
+
+  // Focus selection handler
+  const handleSelectCell = useCallback((row: number, col: number) => {
+    if (isBoardSolved) return; // Cannot select tiles when board is solved
+    sounds.playClick();
+    const cell = { row, col };
+    setSelectedCell(cell);
+    selectCell(cell);
+
+    if (inputMode === 'number-first' && activeNumber !== null) {
+      handleNumberInput(activeNumber, cell);
+    } else if (inputMode === 'number-first' && activeNumber === null) {
+      const cellVal = board[row]?.[col] || 0;
+      if (cellVal > 0) {
+        setActiveNumber(cellVal);
+      }
+    }
+  }, [selectCell, isBoardSolved, inputMode, activeNumber, handleNumberInput, board]);
 
   // Erase cell content
   const handleErase = useCallback(() => {
@@ -259,7 +282,20 @@ export const App: React.FC = () => {
       // Number keys 1-9
       if (e.key >= '1' && e.key <= '9') {
         e.preventDefault();
-        handleNumberInput(parseInt(e.key, 10));
+        const num = parseInt(e.key, 10);
+        if (inputMode === 'number-first') {
+          setActiveNumber(prev => (prev === num ? null : num));
+        } else {
+          handleNumberInput(num);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        if (inputMode === 'number-first' && activeNumber !== null) {
+          setActiveNumber(null);
+        } else {
+          setSelectedCell(null);
+          selectCell(null);
+        }
       } else if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
         handleErase();
@@ -305,7 +341,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [room?.status, handleNumberInput, handleErase, handleUndo, selectCell]);
+  }, [room?.status, isBoardSolved, inputMode, activeNumber, handleNumberInput, handleErase, handleUndo, selectCell]);
 
   // Compute number counts currently on board
   const numberCounts = useMemo(() => {
@@ -377,6 +413,8 @@ export const App: React.FC = () => {
                 opponentColors={opponentColors}
                 validationMode={room.settings.validationMode}
                 isBoardSolved={isBoardSolved}
+                inputMode={inputMode}
+                activeNumber={activeNumber}
               />
 
               <Keypad
@@ -390,6 +428,10 @@ export const App: React.FC = () => {
                 numberCounts={numberCounts}
                 canUndo={history.length > 0}
                 disabled={isBoardSolved}
+                inputMode={inputMode}
+                onSelectInputMode={handleSelectInputMode}
+                activeNumber={activeNumber}
+                onSelectActiveNumber={setActiveNumber}
               />
             </div>
 
@@ -407,10 +449,10 @@ export const App: React.FC = () => {
                   Quick Controls
                 </span>
                 <div className="grid grid-cols-2 gap-1.5 font-mono">
-                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">1-9</kbd> Enter num</div>
+                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">1-9</kbd> {inputMode === 'number-first' ? 'Pick num' : 'Enter num'}</div>
                   <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">N / Space</kbd> Notes</div>
                   <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">Arrows</kbd> Move</div>
-                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">Del</kbd> Erase</div>
+                  <div><kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-200">{inputMode === 'number-first' && activeNumber !== null ? 'Esc' : 'Del'}</kbd> {inputMode === 'number-first' && activeNumber !== null ? 'Deselect' : 'Erase'}</div>
                 </div>
               </div>
             </div>
